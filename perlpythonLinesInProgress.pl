@@ -36,7 +36,10 @@ while (my $line = <>) {
 #print statment with no newline
 	} elsif ($line =~ /^\s*print\s*"(.*)"[\s;]*$/) { 
 		my $printInput = $1;
-		if ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE variable
+		if ($printInput =~ /^\s*print\s*\$\_\s*;$/) { #special case for $_ (IN THE CASE OF PRINTING FROM THE COMMAND LINE? 
+			&whitespacePrinter($whitespaceCounter);		
+			print "print line\n";
+		} elsif ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE variable
 			&whitespacePrinter($whitespaceCounter);			
 			$printInput =~ s/\$//; #removes variable signal
 			print "sys.stdout.write($printInput)\n";
@@ -53,6 +56,25 @@ while (my $line = <>) {
 	} elsif ($line =~ /^\s*next;$/) {
 		&whitespacePrinter($whitespaceCounter);
 		print "continue\n";
+
+#looping through every line in a FILE 
+	} elsif ($line =~ /^\s*while\s*(.*)\<\>(.*)\s*(.*)\s*$/) {
+		&whitespacePrinter($whitespaceCounter);	
+		print "import fileinput\n"
+		&whitespacePrinter($whitespaceCounter);	
+		print "for line in fileinput.input():\n"	
+
+#looping through STDIN (while loop)
+	} elsif ($line =~ /^\s*while\s*(.*)\<STDIN\>(.*)\s*(.*)\s*$/) {
+		&whitespacePrinter($whitespaceCounter);
+		print "import sys\n";
+		&whitespacePrinter($whitespaceCounter);
+		print "for line in sys.stdin:\n"; 
+
+#chomp from STDIN
+	} elsif ($line =~ /^\s*chomp\s*\$(.*)\s*;$/) {
+		&whitespacePrinter($whitespaceCounter);	
+		print "$1 = sys.stdin.readlines()\n"
 
 #arithmetic operations
 	} elsif ($line =~ /^\s*[^\s]*\s*=(.*);$/) {
@@ -114,18 +136,33 @@ while (my $line = <>) {
 		$line =~ s/\}/ /;
 		$whitespaceCounter --;
 
+#ARRAY HANDLING
+#push
+	} elsif ($line =~ /^\s*push\s*\@(.*)\,\s*(.*)\s*;$/) {
+		&whitespacePrinter($whitespaceCounter);
+		print "$1.push($2)\n";
+
+#pop
+	} elsif ($line =~ /^\s*pop\s*\@(.*);$/) {
+		&whitespacePrinter($whitespaceCounter);
+		print "$1.pop\n";
+
+#unshift
+	} elsif ($line =~ /^\s*unshift\s*\@(.*)\,\s*(.*)\s*;$/) {
+		&whitespacePrinter($whitespaceCounter);
+		print "$1.unshift($2)\n";
+
+#pop
+	} elsif ($line =~ /^\s*shift\s*\@(.*);$/) {
+		&whitespacePrinter($whitespaceCounter);
+		print "$1.shift\n";
+
+
 #substitution using s/// (UNTESTED AS YET)
 	} elsif ($line =~ /^\s*(.*)\s*s\/(.*)\/(.*)\/g(.*)\s*;$/) {
 		my $replaced = $2;
 		my $replaceWith = $3;
 		print "re.compile('$replaced').sub('$replaceWith', s)"
-
-#looping through STDIN
-	} elsif ($line =~ /^\s*while\s*\(\<STDIN\>\)\s*(.*)\s*$/) {
-		&whitespacePrinter($whitespaceCounter);
-		print "import sys";
-		&whitespacePrinter($whitespaceCounter);
-		print "for line in sys.stdin:"; 
 
 # Lines we can't translate are turned into comments
 	} else { 
@@ -134,29 +171,36 @@ while (my $line = <>) {
 
 }
 sub arithmeticLines { 
-#things for non interesting lines; to be called as a sub just before the untranslatables
-	#removes $ before variables
-	$_[0] =~ s/\$//g;
 
-	#and/or/not
-	$_[0] =~ s/\&\&/and /g;
-	$_[0] =~ s/\|\|/or /g;
-	$_[0] =~ s/!\s/not /g;
+	#deals with arrays being initiated specifically
+	if ($_[0] =~ /^\s*\@(.*)\s*\=\s*\((.*)\)\s*;$/)	{
+		&whitespacePrinter($whitespaceCounter);
+		print	"$1 = [$2]\n";
 
-#comparison operators that dont exist in Python
-	$_[0] =~ s/eq /\=\=/g;
-	$_[0] =~ s/ne /!=/g;
-	$_[0] =~ s/gt />/g;
-	$_[0] =~ s/lt /</g;
-	$_[0] =~ s/ge />=/g;
-	$_[0] =~ s/le /<=/g;	
+	} else {
+		#removes $ before variables
+		$_[0] =~ s/\$//g;
 
-#division
-	$_[0] =~ s/\//\/\//g;
+		#and/or/not
+		$_[0] =~ s/\&\&/and /g;
+		$_[0] =~ s/\|\|/or /g;
+		$_[0] =~ s/!\s/not /g;
 
-#remove that semicolon
-	$_[0] =~ s/\;//;
-	print $_[0];
+	#comparison operators that dont exist in Python
+		$_[0] =~ s/ eq / == /g;
+		$_[0] =~ s/ ne / != /g;
+		$_[0] =~ s/ gt / > /g;
+		$_[0] =~ s/ lt / < /g;
+		$_[0] =~ s/ ge / >= /g;
+		$_[0] =~ s/ le / <= /g;	
+
+	#division
+		$_[0] =~ s/\//\/\//g;
+
+	#remove that semicolon
+		$_[0] =~ s/\;//;
+		print $_[0];
+	}
 }
 
 sub whitespacePrinter {
