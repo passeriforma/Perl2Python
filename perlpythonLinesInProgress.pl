@@ -8,32 +8,68 @@ while (my $line = <>) {
 
 #	&whitespaceStack(&stateStack); #I think that this works?
 
-	if ($line =~ /^#!/ && $. == 1) { # translate #! line 
+# translate #! line 
+	if ($line =~ /^#!/ && $. == 1) {
 		print "#!/usr/bin/python2.7 -u\n";
 
-	} elsif ($line =~ /^\s*#/ || $line =~ /^\s*$/) { # Blank & comment lines (unchanged)
+ # Blank & comment lines (unchanged)
+	} elsif ($line =~ /^\s*#/ || $line =~ /^\s*$/) {
 		print $line;
 
-	} elsif ($line =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) { #print statement with newline
-			print "print \"$1\"\n";
-			# "
+ #print statement with newline
+	} elsif ($line =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {
+		my $printInput = $1;
+		if ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE variable
+			$printInput =~ s/\$//; #removes variable signal
+			print "print $printInput\n";
+		} else { #there is no variable (or many, which currently kill everything)
+			print "print \"$printInput\"\n";
+		}
 
-	} elsif ($line =~ /^\s*print\s*"(.*)"[\s;]*$/) { #print statment with no newline
-			print "sys.stdout.write(\"$1\")\n";
-			# "
+#print statment with no newline
+	} elsif ($line =~ /^\s*print\s*"(.*)"[\s;]*$/) { 
+		my $printInput = $1;
+		if ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE variable
+			$printInput =~ s/\$//; #removes variable signal
+			print "sys.stdout.write($printInput)\n";
+		} else { #there is no variable (or many, which currently kill everything)
+			print "sys.stdout.write(\"$printInput\")\n";
+		}
 
-	} elsif ($line =~ /^\s*[^\s]*\s*=(.*);$/) { #arithmetic operations
+#arithmetic operations
+	} elsif ($line =~ /^\s*[^\s]*\s*=(.*);$/) {
 #		print $line;
 		&arithmeticLines($line);
-	
-	} elsif ($line =~ /^\s*[^\s]*\s*(break)(.*);$/ || $line =~ /^\s*[^\s]*\s*(continue)(.*);$/) { #break/continue
+#		print "$lineToPrint\n";
+
+#break/continue	
+	} elsif ($line =~ /^\s*[^\s]*\s*(break)(.*);$/ || $line =~ /^\s*[^\s]*\s*(continue)(.*);$/) {
 		print "$1"
-	} else { # Lines we can't translate are turned into comments
+
+#for loops
+
+#while loops
+
+#if statements
+	} elsif ($line =~ /^\s*(.*)\s*if\s*\((.*)\)(.*)\s*$/) {
+		my $condition = $2;
+		print "if ";
+		&arithmeticLines($condition);
+		print ":\n";
+
+# elsif 
+
+#else
+#	} elsif ($line =~ /^$/
+
+#end curly brace needs removal
+	} elsif ($line =~ /^\s*(.*)\s*\}\s*\((.*)\)(.*);$/) {
+		$line =~ s/\}//;
+
+# Lines we can't translate are turned into comments
+	} else { 
 		print "#$line\n";
 	}
-
-
-
 
 }
 sub arithmeticLines { 
@@ -49,7 +85,7 @@ sub arithmeticLines {
 	$_[0] =~ s/!\s/not/g;
 
 	$_[0] =~ s/\;//;
-	print "$_[0]\n";
+	print $_[0];
 }
 
 #WHERE IN THE PROCESS DO I DO THESE? Before every line needs an update, yeah?

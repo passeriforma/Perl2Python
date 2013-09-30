@@ -6,7 +6,7 @@ $b = 2;
 $c = $a + $b / $b;
 
 if ($c != 0 && $a < 0) {
-	print "Where is your logic?\n";
+	print "Not right. No value for you.\n";
 } else {
-	print "the value of c is $c.\n"
+	print "$c"
 }
