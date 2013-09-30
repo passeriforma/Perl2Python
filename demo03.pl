@@ -3,6 +3,10 @@
 $a = 12;
 $b = 2;
 
-$c = $a + $b * $b;
+$c = $a + $b / $b;
 
-print "$c";
+if ($c != 0 && $a < 0) {
+	print "Where is your logic?\n";
+} else {
+	print "the value of c is $c.\n"
+}
