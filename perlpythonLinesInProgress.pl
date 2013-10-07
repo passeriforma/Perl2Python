@@ -8,11 +8,6 @@ while (my $line = <>) {
 
 	#NOTE: Deal with semicolons on a line by line basis
 
-#print whitespace, if relevant
-#	for ($x=0; $x<$whitespaceCounter; $x++) {
-#		print ' ';
-#	}
-
 # translate #! line 
 	if ($line =~ /^#!/ && $. == 1) {
 		print "#!/usr/bin/python2.7 -u\n";
@@ -24,8 +19,17 @@ while (my $line = <>) {
  #print statement with newline
 	} elsif ($line =~ /^\s*print\s*"(.*)\\n"[\s;]*$/) {
 		my $printInput = $1;
-		if ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE variable
-			$printInput =~ s/\$//; #removes variable signal
+		if($printInput =~ /ARGV\[(.*)\]$/) { #that variable is ARGV[]
+			&whitespacePrinter($whitespaceCounter);
+			my $location = $1;
+			$location =~ s/\$//;
+			print "print sys.argv[$location + 1]\n"
+		} elsif ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE $variable
+			$printInput =~ s/\$//; #removes variable signs
+			&whitespacePrinter($whitespaceCounter);
+			print "print $printInput\n";
+		} elsif ($printInput =~ /^(.*)\s*\@(.*)*$/) { #there is ONE @variable
+			$printInput =~ s/\@//;
 			&whitespacePrinter($whitespaceCounter);
 			print "print $printInput\n";
 		} else { #there is no variable (or many, which currently kill everything)
@@ -41,7 +45,8 @@ while (my $line = <>) {
 			print "print line\n";
 		} elsif ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE variable
 			&whitespacePrinter($whitespaceCounter);			
-			$printInput =~ s/\$//; #removes variable signal
+			$printInput =~ s/\$//; #removes variable signs
+			$printInput =~ s/\@//;
 			print "sys.stdout.write($printInput)\n";
 		} else { #there is no variable (or many, which currently kill everything)
 			&whitespacePrinter($whitespaceCounter);
@@ -60,7 +65,7 @@ while (my $line = <>) {
 #looping through every line in a FILE 
 	} elsif ($line =~ /^\s*while\s*(.*)\<\>(.*)\s*(.*)\s*$/) {
 		&whitespacePrinter($whitespaceCounter);	
-		print "import fileinput\n"
+		print "import fileinput\n";
 		&whitespacePrinter($whitespaceCounter);	
 		print "for line in fileinput.input():\n"	
 
@@ -76,11 +81,30 @@ while (my $line = <>) {
 		&whitespacePrinter($whitespaceCounter);	
 		print "$1 = sys.stdin.readlines()\n"
 
+#split
+	} elsif ($line =~ /^\s*(.*)\s*=\s*split\(\/(.*)\/,\s*\$(.*)\)\s*;/) {
+		my $string = $3;
+		my $delineator = $2;
+		my $assignmentVariable = $1;
+		&whitespacePrinter($whitespaceCounter);
+		print "$assignmentVariable = $string.split(\"$delineator\")\n";
+
+#join
+	} elsif ($line =~ /^\s*(.*)\s*=\s*join\(\'(.*)\'\,\s*(.*)\)\s*;$/) {
+		my $assignmentVariable = $1;
+		my $string = $3;
+		my $delineator = $2;
+		&whitespacePrinter($whitespaceCounter);
+		print "$assignmentVariable = '$delineator'.join([$string])";
+
 #arithmetic operations
 	} elsif ($line =~ /^\s*[^\s]*\s*=(.*);$/) {
-#		print $line;
-		&whitespacePrinter($whitespaceCounter);
-		&arithmeticLines($line);
+		if ($line =~ /^\s*\@(.*)\s*=\s*(.*);$/) {#arrays are dealt with seperately
+			next;
+		} else {
+			&whitespacePrinter($whitespaceCounter);
+			&arithmeticLines($line);
+		}
 
 # ++ and --
 	} elsif ($line =~ /^\s*(.*)\s*\+\+(.*);$/) { 
@@ -96,15 +120,26 @@ while (my $line = <>) {
 		print "$minusMinus -= 1\n";
 
 #for loops (If in C style then no direct comparison)?
+#foreach (with ARGV) (super specific, could do with broadening in scope)
+	} elsif ($line =~ /^\s*foreach\s*\$(.*)\s*\((.*)\)\s*{\s*$/) {
+		#foreach $i (0..$#ARGV) becomes for i in xrange (len(sys.argv) - 1):
+		my $variableName = $1;
+		&whitespacePrinter($whitespaceCounter);
+		print "for $variableName in xrange (len(sys.argv) - 1):\n";
 
 #while loops
 	} elsif ($line =~ /^\s*(.*)\s*while\s*\((.*)\)(.*)\s*$/) {
-		my $whileCondition = $2;
-		&whitespacePrinter($whitespaceCounter);		
-		print "while ";
-		&arithmeticLines($whileCondition);
-		print ":\n";
-		$whitespaceCounter ++;
+		if ($line =~ /^\s*(.*)\s*while\s*\((.*)\s*\<STDIN\>\s*\)(.*)\s*$/) { #stdin   
+			&whitespacePrinter($whitespaceCounter);		
+			print "for line in sys.stdin:";
+		} else {
+			my $whileCondition = $2;
+			&whitespacePrinter($whitespaceCounter);		
+			print "while ";
+			&arithmeticLines($whileCondition);
+			print ":\n";
+			$whitespaceCounter ++;
+		}
 
 # elsif 
 	} elsif ($line =~ /^\s*(.*)\s*elsif\s*\((.*)\)(.*)\s*$/) {
@@ -136,7 +171,24 @@ while (my $line = <>) {
 		$line =~ s/\}/ /;
 		$whitespaceCounter --;
 
+
 #ARRAY HANDLING
+#array conversion
+	}elsif ($line =~ /^\s*(.*)\s*\@(.*)\s*(.*)\s*;$/) { #array in the line	
+		my $arrayName = $2; 
+		if (/^\s*(.*)\s*\@(.*)\s*=\s*((.*))\s*;$/) { #declaring the array
+			$line =~ s/\@//;
+			$line =~ s/\(/\[/;
+			$line =~ s/\)/\]/;
+			$line =~ s/\"/\'/g;
+			$line =~ s/\;//;
+			print "$line";
+		} else { #accessing the array
+			#  $arrayName[0 or whatever];
+			$line =~ s/\@//;
+			$line =~ s/\;//;
+			print "$line";
+		}
 #push
 	} elsif ($line =~ /^\s*push\s*\@(.*)\,\s*(.*)\s*;$/) {
 		&whitespacePrinter($whitespaceCounter);
@@ -158,11 +210,18 @@ while (my $line = <>) {
 		print "$1.shift\n";
 
 
-#substitution using s/// (UNTESTED AS YET)
-	} elsif ($line =~ /^\s*(.*)\s*s\/(.*)\/(.*)\/g(.*)\s*;$/) {
-		my $replaced = $2;
-		my $replaceWith = $3;
-		print "re.compile('$replaced').sub('$replaceWith', s)"
+#concatenation with . (both dont add spaces by default yay) (with + is the same)
+#	} elsif ($line =~ /^\s*(.*)\s*\.\s*(.*)\s*;$/) { #untested match
+#		$line =~ s/\./\+/;
+#		print $line;
+
+#substitution s/// (UNTESTED)
+	#    $line =~ s/[aeiou]//g; becomes     line = re.sub(r'[aeiou]', '', line)
+#	} elsif ($line =~ /^\s*\$(.*)\s*(.*)\s*s\/(.*)\/(.*)\/(.*);$/) {
+#		my $variableName = $1;
+#		my $replaced = $3;
+#		my $replacedWith = $4;
+#		print "$variableName = re.sub(r'$3', '$4', $variableName)"
 
 # Lines we can't translate are turned into comments
 	} else { 
@@ -172,35 +231,35 @@ while (my $line = <>) {
 }
 sub arithmeticLines { 
 
-	#deals with arrays being initiated specifically
-	if ($_[0] =~ /^\s*\@(.*)\s*\=\s*\((.*)\)\s*;$/)	{
-		&whitespacePrinter($whitespaceCounter);
-		print	"$1 = [$2]\n";
+	# $#
+	$_[0] =~ s/\$\#ARGV/len\(sys\.argv\)/;
 
-	} else {
-		#removes $ before variables
-		$_[0] =~ s/\$//g;
+	#removes $ before variables
+	$_[0] =~ s/\$//g;
+	$_[0] =~ s/\@//g;
 
-		#and/or/not
-		$_[0] =~ s/\&\&/and /g;
-		$_[0] =~ s/\|\|/or /g;
-		$_[0] =~ s/!\s/not /g;
+	#stdin
+	$_[0] =~ s/\<STDIN\>/float\(sys\.stdin\.readline\(\)\)/;
 
-	#comparison operators that dont exist in Python
-		$_[0] =~ s/ eq / == /g;
-		$_[0] =~ s/ ne / != /g;
-		$_[0] =~ s/ gt / > /g;
-		$_[0] =~ s/ lt / < /g;
-		$_[0] =~ s/ ge / >= /g;
-		$_[0] =~ s/ le / <= /g;	
+	#and/or/not
+	$_[0] =~ s/\&\&/and /g;
+	$_[0] =~ s/\|\|/or /g;
+	$_[0] =~ s/!\s/not /g;
+
+	#comparison operators that dont exist in Python replaced with those that do
+	$_[0] =~ s/ eq / == /g;
+	$_[0] =~ s/ ne / != /g;
+	$_[0] =~ s/ gt / > /g;
+	$_[0] =~ s/ lt / < /g;
+	$_[0] =~ s/ ge / >= /g;
+	$_[0] =~ s/ le / <= /g;	
 
 	#division
-		$_[0] =~ s/\//\/\//g;
+	$_[0] =~ s/\//\/\//g;
 
 	#remove that semicolon
-		$_[0] =~ s/\;//;
-		print $_[0];
-	}
+	$_[0] =~ s/\;//;
+	print $_[0];
 }
 
 sub whitespacePrinter {
@@ -209,4 +268,5 @@ sub whitespacePrinter {
 		print '   ';
 	}
 }
+
 
