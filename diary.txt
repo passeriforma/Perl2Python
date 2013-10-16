@@ -1,0 +1,42 @@
+Date:   Wed Oct 16 19:23 (started 17:20)
+
+    added demo00 though 09 and final few tests 
+    Cleaned up code in main program
+
+
+Date:   Mon Oct 7 20:15 (started 18:02)
+
+    Added more tests and demoes
+	Implemented split, join, chomp
+	Fixed some bugs
+
+
+Date:   Mon Sep 30 23:22 (started 20:52)
+
+    Implemented STDIN and $_ in certain cases
+
+
+Date:   Mon Sep 30 22:43 (Started 19:01)
+
+    Implemented break and continue, 
+	Cleaned up arithmetic subroutine
+	Implemented whitespace subroutine
+
+
+Date:   Mon Sep 30 21:04 (Started 19:07)
+
+    Implemented print without newline, if statements, removal of closing curly braces, comparisons
+	(subset 2 done)
+
+
+Date:   Mon Sep 30 20:15 (Started 19:01)
+
+    Added print without newline
+	Altered demoes to be more comprehensive
+	Implemented arithmetic subroutine (subset 1 done)
+
+
+Date:   Fri Sep 27 18:40 (started 16:40)
+
+    Demoes created, base file altered (subset 0 done)
+	First commit
