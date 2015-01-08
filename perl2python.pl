@@ -40,7 +40,7 @@ while (my $line = <>) {
 #print statment with no newline
 	} elsif ($line =~ /^\s*print\s*"(.*)"[\s;]*$/) { 
 		my $printInput = $1;
-		if ($printInput =~ /^\s*print\s*\$\_\s*;$/) { #special case for $_ (IN THE CASE OF PRINTING FROM THE COMMAND LINE? 
+		if ($printInput =~ /^\s*print\s*\$\_\s*;$/) { #special case for $_ (IN THE CASE OF PRINTING FROM THE COMMAND LINE?) 
 			&whitespacePrinter($whitespaceCounter);		
 			print "print line\n";
 		} elsif ($printInput =~ /^(.*)\s*\$(.*)*$/) { #there is ONE variable

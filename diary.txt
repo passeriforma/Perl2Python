@@ -1,42 +1,35 @@
-Date:   Wed Oct 16 19:23 (started 17:20)
+Date:   Thu Jan 8 11:48:50 2015 +1100
 
-    added demo00 though 09 and final few tests 
-    Cleaned up code in main program
+    Create README.md
 
+Date:   Wed Oct 16 19:38:34 2013 +1100
 
-Date:   Mon Oct 7 20:15 (started 18:02)
+    cleaned up directory for submission
 
-    Added more tests and demoes
-	Implemented split, join, chomp
-	Fixed some bugs
+Date:   Wed Oct 16 19:23:28 2013 +1100
 
+    added demoes and tests and cleaned up code
 
-Date:   Mon Sep 30 23:22 (started 20:52)
+Date:   Mon Oct 7 20:15:38 2013 +1100
 
-    Implemented STDIN and $_ in certain cases
+    Added more tests and demoes, split, join, fixed some bugs, rewoeked chomp and array handling
 
+Date:   Mon Sep 30 23:22:10 2013 +1000
 
-Date:   Mon Sep 30 22:43 (Started 19:01)
+    added some code for dealing with STDIN and $_ in certain cases (possibly buggy)
 
-    Implemented break and continue, 
-	Cleaned up arithmetic subroutine
-	Implemented whitespace subroutine
+Date:   Mon Sep 30 22:43:21 2013 +1000
 
+    changes: added break and continue, as well as cleaning up the arithmetic and adding untested s///. Also put together demo04 and got it working. (Plus ++ and --)
 
-Date:   Mon Sep 30 21:04 (Started 19:07)
+Date:   Mon Sep 30 21:04:15 2013 +1000
 
-    Implemented print without newline, if statements, removal of closing curly braces, comparisons
-	(subset 2 done)
+    'Changes: print without newline, if statements, removal of closing curly braces as well as adding comments to demoes explaining what they are testing'
 
+Date:   Mon Sep 30 20:15:26 2013 +1000
 
-Date:   Mon Sep 30 20:15 (Started 19:01)
+    Updates: added parint without newline, altered demoes to be more comprehensive
 
-    Added print without newline
-	Altered demoes to be more comprehensive
-	Implemented arithmetic subroutine (subset 1 done)
+Date:   Fri Sep 27 18:40:17 2013 +1000
 
-
-Date:   Fri Sep 27 18:40 (started 16:40)
-
-    Demoes created, base file altered (subset 0 done)
-	First commit
+    demoes created, base file altered
